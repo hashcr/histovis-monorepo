@@ -1,0 +1,23 @@
+spring:
+    application:
+      name: user-service
+    datasource:
+        url: jdbc:postgresql://localhost:5432/${POSTGRES_DB}  # From your .env; override with env vars if needed
+        username: ${POSTGRES_USER}  # Pull from .env
+        password: ${POSTGRES_PASSWORD}
+        driver-class-name: org.postgresql.Driver
+    jpa:
+        hibernate:
+            ddl-auto: update  # Creates tables automatically; change to 'validate' later
+        show-sql: true  # For debugging
+        properties:
+            hibernate:
+                dialect: org.hibernate.dialect.PostgreSQLDialect
+
+# JWT secret (store in .env or secrets; used in your common lib)
+jwt:
+    secret: ${JWT_SECRET}  # At least 256 bits for HS256
+    expiration: ${JWT_EXPIRATION}}  # 24 hours
+
+server:
+    port: 8081  # Or whatever port for this microservice

@@ -1,3 +1,0 @@
-jwt:
-  secret: qwertyuiopasdfghjklzxcvbnmqwerty
-  expiration: 3600000
