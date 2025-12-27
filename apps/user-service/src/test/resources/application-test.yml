@@ -24,3 +24,4 @@ jwt:
   secret: c10634b2f2ec04aaa21ab125a4e243d0e1d444a26bb3c1e713469946e28402a7
   expiration: 3600000 # 1 hour for testing
 
+USER_SERVICE_PORT: 8080
