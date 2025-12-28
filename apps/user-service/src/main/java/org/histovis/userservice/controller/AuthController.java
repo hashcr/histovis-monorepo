@@ -37,7 +37,7 @@ public class AuthController {
             String token = jwUtils.generateToken(request.getUsername(), List.of(USER_ROLE));
             return new LoginResponse(token);
         } catch (BadCredentialsException e) {
-            throw new BadCredentialsException("Invalid credentials");
+            throw new BadCredentialsException("Invalid login credentials");
         }
     }
 }
