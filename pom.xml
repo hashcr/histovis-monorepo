@@ -25,6 +25,7 @@
     <testcontainers.version>1.20.2</testcontainers.version>
     <maven.compiler.source>21</maven.compiler.source>
     <maven.compiler.target>21</maven.compiler.target>
+    <spring-boot.version>3.5.3</spring-boot.version>
   </properties>
 
   <modules>
@@ -72,6 +73,7 @@
       <dependency>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-actuator</artifactId>
+        <version>${spring-boot.version}</version>
       </dependency>
 
     </dependencies>
