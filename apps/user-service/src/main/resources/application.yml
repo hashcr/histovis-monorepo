@@ -19,5 +19,12 @@ jwt:
     secret: ${JWT_SECRET}  # At least 256 bits for HS256
     expiration: ${JWT_EXPIRATION}  # 24 hours
 
+# Expose actuator endpoints for monitoring and management
+management:
+    endpoints:
+        web:
+            exposure:
+                include: health,info
+
 server:
     port: ${USER_SERVICE_PORT}
