@@ -31,6 +31,7 @@
   <modules>
     <module>libs/java-commons</module>
     <module>apps/user-service</module>
+    <module>apps/images-service</module>
   </modules>
 
   <dependencyManagement>
