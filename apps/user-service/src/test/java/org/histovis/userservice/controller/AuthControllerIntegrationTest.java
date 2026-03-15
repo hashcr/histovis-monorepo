@@ -6,6 +6,7 @@ import org.histovis.userservice.dto.LoginResponse;
 import org.histovis.userservice.model.User;
 import org.histovis.userservice.repository.UserRepository;
 import org.histovis.userservice.utils.Constants;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 public class AuthControllerIntegrationTest {
 
     @Container
+    @SuppressWarnings("resource")
     public static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18")
             .withDatabaseName("testdb")
             .withUsername("test")
@@ -67,13 +69,14 @@ public class AuthControllerIntegrationTest {
         HttpEntity<LoginRequest> entity = new HttpEntity<>(request, headers);
 
         // Act
-        ResponseEntity<LoginResponse> response = restTemplate.postForEntity(Constants.LOGIN_URL, entity,
+        ResponseEntity<LoginResponse> response = restTemplate.postForEntity(Constants.AUTH_BASE_URL + Constants.LOGIN_URL, entity,
                 LoginResponse.class);
 
         // Assert
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody()).isNotNull();
-        assertThat(response.getBody().getToken()).isNotBlank();
+        Assertions.assertNotNull(response.getBody());
+        assertThat(response.getBody().getUser()).isNotNull();
+        assertThat(response.getBody().getUser().getToken()).isNotBlank();
     }
 
     @Test
@@ -88,7 +91,7 @@ public class AuthControllerIntegrationTest {
         HttpEntity<LoginRequest> entity = new HttpEntity<>(request, headers);
 
         // Act
-        ResponseEntity<LoginResponse> response = restTemplate.postForEntity(Constants.LOGIN_URL, entity,
+        ResponseEntity<LoginResponse> response = restTemplate.postForEntity(Constants.AUTH_BASE_URL + Constants.LOGIN_URL, entity,
                 LoginResponse.class);
 
         // Asserts
