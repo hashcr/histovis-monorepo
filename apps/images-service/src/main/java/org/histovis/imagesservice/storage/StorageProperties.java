@@ -15,6 +15,7 @@ public class StorageProperties {
     @Data
     public static class Minio {
         private String endpoint;
+        private String publicEndpoint;
         private String accessKey;
         private String secretKey;
         private String bucket;
