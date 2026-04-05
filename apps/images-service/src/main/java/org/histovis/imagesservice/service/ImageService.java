@@ -48,12 +48,13 @@ public class ImageService {
         List<Image> images = imageRepository.searchByText(query);
 
         if (tagsList != null && !tagsList.isEmpty()) {
+            List<String> normalizedFilter = tagsList.stream().map(String::toLowerCase).toList();
             images = images.stream()
                     .filter(image -> {
                         List<String> imageTags = image.getTags().stream()
-                                .map(ImageTag::getTag)
+                                .map(t -> t.getTag().toLowerCase())
                                 .toList();
-                        return imageTags.containsAll(tagsList);
+                        return imageTags.containsAll(normalizedFilter);
                     })
                     .toList();
         }
@@ -170,7 +171,7 @@ public class ImageService {
     private void setTags(Image image, List<String> tagsList) {
         image.getTags().clear();
         if (tagsList != null) {
-            tagsList.forEach(tag -> image.getTags().add(new ImageTag(image, tag)));
+            tagsList.forEach(tag -> image.getTags().add(new ImageTag(image, tag.toLowerCase())));
         }
     }
 
