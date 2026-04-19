@@ -6,6 +6,7 @@ import org.histovis.analysisservice.dto.SubmitJobRequest;
 import org.histovis.analysisservice.dto.response.GetJobResponse;
 import org.histovis.analysisservice.dto.response.ListJobsResponse;
 import org.histovis.analysisservice.dto.response.SubmitJobResponse;
+import org.histovis.analysisservice.common.JobStatus;
 import org.histovis.analysisservice.exception.JobNotFoundException;
 import org.histovis.analysisservice.mapper.JobMapper;
 import org.histovis.analysisservice.model.Job;
@@ -13,6 +14,7 @@ import org.histovis.analysisservice.repository.JobRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,5 +49,17 @@ public class JobService {
         Job saved = jobRepository.save(job);
         log.info("Job submitted id={} plugin={} by user={}", saved.getId(), saved.getPluginCode(), username);
         return new SubmitJobResponse(saved.getId());
+    }
+
+    @Transactional
+    public void updateJobResult(UUID id, JobStatus status, String output) {
+        Job job = jobRepository.findById(id)
+                .orElseThrow(() -> new JobNotFoundException(id));
+        job.setStatus(status);
+        job.setOutput(output);
+        if (status == JobStatus.COMPLETED || status == JobStatus.FAILED) {
+            job.setCompletedDate(LocalDateTime.now());
+        }
+        log.info("Job updated id={} status={}", id, status);
     }
 }
