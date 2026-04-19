@@ -31,7 +31,7 @@ public class JobController {
     }
 
     @GetMapping
-    public ListJobsResponse list(@RequestParam String imageUrl) {
+    public ListJobsResponse list(@RequestParam UUID imageId) {
         return new ListJobsResponse(List.of());
     }
 
