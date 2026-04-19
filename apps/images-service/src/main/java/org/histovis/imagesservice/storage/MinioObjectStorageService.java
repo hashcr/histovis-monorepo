@@ -60,7 +60,8 @@ public class MinioObjectStorageService implements ObjectStorageService {
 
     @Override
     public String getUrl(String key) {
-        String endpoint = properties.getMinio().getEndpoint();
+        String publicEndpoint = properties.getMinio().getPublicEndpoint();
+        String endpoint = publicEndpoint != null && !publicEndpoint.isBlank() ? publicEndpoint : properties.getMinio().getEndpoint();
         String bucket = properties.getMinio().getBucket();
         return endpoint + "/" + bucket + "/" + key;
     }

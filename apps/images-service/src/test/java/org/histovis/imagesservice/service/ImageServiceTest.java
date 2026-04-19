@@ -5,13 +5,13 @@ import org.histovis.imagesservice.dto.ImageDto;
 import org.histovis.imagesservice.dto.UploadImageResponse;
 import org.histovis.imagesservice.exception.ImageNotFoundException;
 import org.histovis.imagesservice.mapper.ImageMapper;
+import org.histovis.imagesservice.model.ImageTag;
 import org.histovis.imagesservice.model.Image;
 import org.histovis.imagesservice.repository.ImageRepository;
 import org.histovis.imagesservice.storage.ObjectStorageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
@@ -101,6 +101,30 @@ class ImageServiceTest {
         // No tag filter — both returned
         List<ImageDto> all = imageService.searchImages(null, null);
         assertThat(all).hasSize(2);
+    }
+
+    @Test
+    void searchImages_shouldReturnOnlyImagesMatchingAllTags() {
+        Image matchingImage = new Image();
+        matchingImage.setId(UUID.randomUUID());
+        matchingImage.setTags(List.of(new ImageTag(matchingImage, "history"), new ImageTag(matchingImage, "art")));
+        matchingImage.setComments(new ArrayList<>());
+
+        Image partialMatchImage = new Image();
+        partialMatchImage.setId(UUID.randomUUID());
+        partialMatchImage.setTags(List.of(new ImageTag(partialMatchImage, "history")));
+        partialMatchImage.setComments(new ArrayList<>());
+
+        when(imageRepository.searchByText(null)).thenReturn(List.of(matchingImage, partialMatchImage));
+        when(imageMapper.toDtoList(List.of(matchingImage))).thenAnswer(inv -> {
+            List<Image> images = inv.getArgument(0);
+            return images.stream().map(i -> new ImageDto(i.getId(), null, null, null, null, List.of(), List.of(), null)).toList();
+        });
+
+        List<ImageDto> result = imageService.searchImages(null, List.of("history", "art"));
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().getId()).isEqualTo(matchingImage.getId());
     }
 
     @Test
