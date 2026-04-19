@@ -6,8 +6,10 @@ import org.histovis.analysisservice.dto.SubmitJobRequest;
 import org.histovis.analysisservice.dto.response.GetJobResponse;
 import org.histovis.analysisservice.dto.response.ListJobsResponse;
 import org.histovis.analysisservice.dto.response.SubmitJobResponse;
+import org.histovis.analysisservice.service.JobService;
 import org.histovis.analysisservice.utils.Constants;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
 import java.util.UUID;
 
 @Slf4j
@@ -25,19 +26,25 @@ import java.util.UUID;
 @RequestMapping(Constants.ANALYSIS_BASE_URL + Constants.JOBS_BASE_URL)
 public class JobController {
 
+    private final JobService jobService;
+
+    public JobController(JobService jobService) {
+        this.jobService = jobService;
+    }
+
     @GetMapping("/{id}")
     public GetJobResponse get(@PathVariable UUID id) {
-        return new GetJobResponse(null);
+        return jobService.getJob(id);
     }
 
     @GetMapping
     public ListJobsResponse list(@RequestParam UUID imageId) {
-        return new ListJobsResponse(List.of());
+        return jobService.listByImage(imageId);
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public SubmitJobResponse submit(@RequestBody @Valid SubmitJobRequest request) {
-        return new SubmitJobResponse(UUID.randomUUID());
+    public SubmitJobResponse submit(@RequestBody @Valid SubmitJobRequest request, Authentication authentication) {
+        return jobService.submit(request, authentication.getName());
     }
 }
