@@ -6,8 +6,10 @@ import org.histovis.analysisservice.repository.JobRepository;
 import org.histovis.commons.jwt.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -39,6 +41,9 @@ class JobControllerIntegrationTest {
             .withDatabaseName("testdb")
             .withUsername("test")
             .withPassword("testpass");
+
+    @MockBean
+    private RabbitTemplate rabbitTemplate;
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -91,7 +96,7 @@ class JobControllerIntegrationTest {
     void submit_shouldReturn201_withValidRequest() {
         String body = """
                 {
-                  "pluginCode": "cell-segmentation",
+                  "pluginCode": "describe_wsi",
                   "imageId": "%s",
                   "imageUrl": "http://minio:9000/bucket/image.jpg",
                   "args": { "threshold": "0.5" }
@@ -200,6 +205,47 @@ class JobControllerIntegrationTest {
         HttpEntity<Void> entity = new HttpEntity<>(authHeaders());
         ResponseEntity<Map> response = restTemplate.exchange(
                 "/api/analysis/jobs/" + UUID.randomUUID(), HttpMethod.GET, entity, Map.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    // --- Update Job Result ---
+
+    @Test
+    void updateResult_shouldReturn204_whenJobExists() {
+        Job job = savedJob(testImageId);
+
+        String body = """
+                {
+                  "status": "COMPLETED",
+                  "output": "Analysis complete: tissue is healthy."
+                }
+                """;
+
+        HttpEntity<String> entity = new HttpEntity<>(body, authHeaders());
+        ResponseEntity<Void> response = restTemplate.exchange(
+                "/api/analysis/jobs/" + job.getId() + "/result", HttpMethod.PUT, entity, Void.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+
+        Job updated = jobRepository.findById(job.getId()).orElseThrow();
+        assertThat(updated.getStatus()).isEqualTo(JobStatus.COMPLETED);
+        assertThat(updated.getOutput()).isEqualTo("Analysis complete: tissue is healthy.");
+        assertThat(updated.getCompletedDate()).isNotNull();
+    }
+
+    @Test
+    void updateResult_shouldReturn404_whenJobNotFound() {
+        String body = """
+                {
+                  "status": "FAILED",
+                  "output": "Worker error."
+                }
+                """;
+
+        HttpEntity<String> entity = new HttpEntity<>(body, authHeaders());
+        ResponseEntity<Map> response = restTemplate.exchange(
+                "/api/analysis/jobs/" + UUID.randomUUID() + "/result", HttpMethod.PUT, entity, Map.class);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }

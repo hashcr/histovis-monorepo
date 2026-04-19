@@ -3,6 +3,7 @@ package org.histovis.analysisservice.controller;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.histovis.analysisservice.dto.SubmitJobRequest;
+import org.histovis.analysisservice.dto.UpdateJobResultRequest;
 import org.histovis.analysisservice.dto.response.GetJobResponse;
 import org.histovis.analysisservice.dto.response.ListJobsResponse;
 import org.histovis.analysisservice.dto.response.SubmitJobResponse;
@@ -13,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -46,5 +48,11 @@ public class JobController {
     @ResponseStatus(HttpStatus.CREATED)
     public SubmitJobResponse submit(@RequestBody @Valid SubmitJobRequest request, Authentication authentication) {
         return jobService.submit(request, authentication.getName());
+    }
+
+    @PutMapping("/{id}/result")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateResult(@PathVariable UUID id, @RequestBody @Valid UpdateJobResultRequest request) {
+        jobService.updateJobResult(id, request.status(), request.output());
     }
 }
