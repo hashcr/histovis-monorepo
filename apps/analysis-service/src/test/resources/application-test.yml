@@ -1,0 +1,25 @@
+spring:
+    datasource:
+        driver-class-name: org.postgresql.Driver
+    jpa:
+        hibernate:
+            ddl-auto: update
+        show-sql: true
+        properties:
+            hibernate:
+                format_sql: true
+    sql:
+        init:
+            mode: never
+
+logging:
+    level:
+        org.springframework: WARN
+        org.hibernate.SQL: DEBUG
+        org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+jwt:
+    secret: c10634b2f2ec04aaa21ab125a4e243d0e1d444a26bb3c1e713469946e28402a7
+    expiration: 3600000
+
+ANALYSIS_SERVICE_PORT: 8082
