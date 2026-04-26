@@ -1,0 +1,233 @@
+{
+  "info": {
+    "name": "Histovis",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "user_service_url", "value": "http://localhost:8080" },
+    { "key": "images_service_url", "value": "http://localhost:8081" },
+    { "key": "analysis_service_url", "value": "http://localhost:8082" },
+    { "key": "token", "value": "" },
+    { "key": "image_id", "value": "" },
+    { "key": "pin_id", "value": "" },
+    { "key": "job_id", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "User Service",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.user && json.user.token) {",
+                  "    pm.collectionVariables.set('token', json.user.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{user_service_url}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"ashuin.sharma@gmail.com\",\n  \"password\": \"123queso\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "url": "{{user_service_url}}/actuator/health"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Images Service",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "url": "{{images_service_url}}/actuator/health"
+          }
+        },
+        {
+          "name": "Search Images",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{images_service_url}}/api/images/search?query=&tagsList=",
+              "host": ["{{images_service_url}}"],
+              "path": ["api", "images", "search"],
+              "query": [
+                { "key": "query", "value": "", "description": "Search term" },
+                { "key": "tagsList", "value": "", "description": "Comma-separated tags" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Image",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{images_service_url}}/api/images/{{image_id}}"
+          }
+        },
+        {
+          "name": "Upload Image",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{images_service_url}}/api/images",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "fileName", "value": "example.jpg", "type": "text" },
+                { "key": "title", "value": "My Image", "type": "text" },
+                { "key": "description", "value": "A description", "type": "text" },
+                { "key": "tagsList", "value": "tag1,tag2", "type": "text" },
+                { "key": "imageFile", "type": "file", "src": "" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Image",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{images_service_url}}/api/images/{{image_id}}",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "fileName", "value": "", "type": "text" },
+                { "key": "title", "value": "", "type": "text" },
+                { "key": "description", "value": "", "type": "text" },
+                { "key": "tagsList", "value": "", "type": "text" },
+                { "key": "notes", "value": "", "type": "text" },
+                { "key": "comments", "value": "", "type": "text" },
+                { "key": "imageFile", "type": "file", "src": "" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Pins",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{images_service_url}}/api/images/{{image_id}}/pins"
+          }
+        },
+        {
+          "name": "Create Pin",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{images_service_url}}/api/images/{{image_id}}/pins",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pin\": {\n    \"x\": 100,\n    \"y\": 200,\n    \"label\": \"My pin\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Update Pin",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{images_service_url}}/api/images/{{image_id}}/pins/{{pin_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pin\": {\n    \"x\": 150,\n    \"y\": 250,\n    \"label\": \"Updated pin\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete Pin",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{images_service_url}}/api/images/{{image_id}}/pins/{{pin_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analysis Service",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "url": "{{analysis_service_url}}/actuator/health"
+          }
+        },
+        {
+          "name": "List Plugins",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{analysis_service_url}}/api/analysis/plugins"
+          }
+        },
+        {
+          "name": "Submit Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{analysis_service_url}}/api/analysis/jobs",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pluginCode\": \"example-plugin\",\n  \"imageId\": \"{{image_id}}\",\n  \"imageUrl\": \"http://localhost:9000/histovis-images/example.jpg\",\n  \"args\": {\n    \"key\": \"value\"\n  }\n}"
+            }
+          }
+        },
+        {
+          "name": "List Jobs by Image",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{analysis_service_url}}/api/analysis/jobs?imageId={{image_id}}",
+              "host": ["{{analysis_service_url}}"],
+              "path": ["api", "analysis", "jobs"],
+              "query": [
+                { "key": "imageId", "value": "{{image_id}}" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Job",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{analysis_service_url}}/api/analysis/jobs/{{job_id}}"
+          }
+        }
+      ]
+    }
+  ]
+}

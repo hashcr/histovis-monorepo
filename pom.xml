@@ -32,6 +32,7 @@
     <module>libs/java-commons</module>
     <module>apps/user-service</module>
     <module>apps/images-service</module>
+    <module>apps/analysis-service</module>
   </modules>
 
   <dependencyManagement>

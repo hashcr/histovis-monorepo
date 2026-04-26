@@ -52,6 +52,8 @@ public class AuthControllerIntegrationTest {
         // test user creation
         User user = new User();
         user.setUsername("testuser");
+        user.setFirstName("Test");
+        user.setLastName("User");
         user.setPassword(passwordEncoder.encode("123queso"));
         userRepository.save(user);
     }
