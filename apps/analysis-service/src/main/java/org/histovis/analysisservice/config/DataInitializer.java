@@ -27,7 +27,7 @@ public class DataInitializer implements CommandLineRunner {
             plugin.setName("Describe Whole Slide Image");
             plugin.setDescription("Uses a large language model to generate a structured natural language description of a whole slide histopathology image, summarizing tissue morphology, staining patterns, and notable regions of interest.");
             plugin.setQueue("analysis.exchange");
-            plugin.setTopic("job.llama.describe.wsi");
+            plugin.setTopic("job.qwen.describe_wsi");
             plugin.setExampleArgs(Map.of());
             plugin.setInstalledBy("system");
             plugin.setInstalledDate(LocalDateTime.now());
