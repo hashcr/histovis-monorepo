@@ -47,6 +47,8 @@ public class JobController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public SubmitJobResponse submit(@RequestBody @Valid SubmitJobRequest request, Authentication authentication) {
+        log.debug("Submit job request received: user={} pluginCode={} imageId={} imageUrl={} args={}",
+                authentication.getName(), request.pluginCode(), request.imageId(), request.imageUrl(), request.args());
         return jobService.submit(request, authentication.getName());
     }
 
