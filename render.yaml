@@ -1,7 +1,6 @@
 databases:
   - name: histovisdb
     databaseName: histovisdb
-    user: postgres
     plan: free
     region: oregon
 
