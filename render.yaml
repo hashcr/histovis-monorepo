@@ -132,3 +132,5 @@ services:
         sync: false
       - key: RABBITMQ_PASSWORD
         sync: false
+      - key: RABBITMQ_VHOST
+        sync: false
