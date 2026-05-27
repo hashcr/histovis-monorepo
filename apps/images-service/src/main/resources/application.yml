@@ -17,6 +17,7 @@ spring:
         properties:
             hibernate:
                 dialect: org.hibernate.dialect.PostgreSQLDialect
+                default_schema: images_service
 
 # JWT secret (shared with users-service via common library)
 jwt:
