@@ -36,6 +36,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                     .requestMatchers("/actuator/info", "/actuator/info/**").permitAll()
+                    .requestMatchers("/api/images/*/urls").permitAll()
                     .requestMatchers(Constants.IMAGES_BASE_URL + "/**").authenticated()
                     .anyRequest().authenticated()
             )

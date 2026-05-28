@@ -184,6 +184,15 @@ public class ImageService {
         return imageMapper.toDto(saved);
     }
 
+    public void patchImageUrls(UUID id, String viewableImageUrl, String previewImageUrl) {
+        Image image = imageRepository.findById(id)
+                .orElseThrow(() -> new ImageNotFoundException(id.toString()));
+        image.setViewableImageUrl(viewableImageUrl);
+        image.setPreviewImageUrl(previewImageUrl);
+        imageRepository.save(image);
+        log.info("Image URLs patched: id={}", id);
+    }
+
     private void setTags(Image image, List<String> tagsList) {
         image.getTags().clear();
         if (tagsList != null) {
