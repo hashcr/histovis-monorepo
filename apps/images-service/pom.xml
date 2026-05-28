@@ -54,6 +54,12 @@
 			<version>${project.version}</version>
 		</dependency>
 
+		<!-- RabbitMQ -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-amqp</artifactId>
+		</dependency>
+
 		<!-- MinIO object storage -->
 		<dependency>
 			<groupId>io.minio</groupId>

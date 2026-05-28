@@ -32,6 +32,12 @@ public class Image {
     @Column(name = "public_url")
     private String publicUrl;
 
+    @Column(name = "viewable_image_url")
+    private String viewableImageUrl;
+
+    @Column(name = "preview_image_url")
+    private String previewImageUrl;
+
     @Column(name = "title", nullable = false)
     private String title;
 

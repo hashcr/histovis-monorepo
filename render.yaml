@@ -88,6 +88,16 @@ services:
         sync: false
       - key: MINIO_BUCKET
         value: histovis-images
+      - key: RABBITMQ_HOST
+        sync: false
+      - key: RABBITMQ_PORT
+        value: "5672"
+      - key: RABBITMQ_USER
+        sync: false
+      - key: RABBITMQ_PASSWORD
+        sync: false
+      - key: RABBITMQ_VHOST
+        sync: false
 
   - type: web
     name: analysis-service
