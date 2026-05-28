@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.histovis.analysisservice.config.RabbitMQConfig;
 import org.histovis.analysisservice.dto.JobDto;
 import org.histovis.analysisservice.dto.JobMessage;
+import org.histovis.analysisservice.dto.PyramidalImageSetupMessage;
 import org.histovis.analysisservice.dto.SubmitJobRequest;
 import org.histovis.analysisservice.dto.response.GetJobResponse;
 import org.histovis.analysisservice.dto.response.ListJobsResponse;
@@ -64,6 +65,13 @@ public class JobService {
         log.info("Job dispatched to exchange={} topic={} jobId={}", RabbitMQConfig.EXCHANGE, plugin.getTopic(), saved.getId());
 
         return new SubmitJobResponse(saved.getId());
+    }
+
+    public void publishPyramidalImageSetup(UUID imageId, String imageUrl) {
+        PyramidalImageSetupMessage message = new PyramidalImageSetupMessage(imageId, imageUrl);
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.TILESERVER_SETUP_WSI_ROUTING_KEY, message);
+        log.info("PyramidalImageSetup dispatched exchange={} topic={} imageId={}",
+                RabbitMQConfig.EXCHANGE, RabbitMQConfig.TILESERVER_SETUP_WSI_ROUTING_KEY, imageId);
     }
 
     @Transactional
