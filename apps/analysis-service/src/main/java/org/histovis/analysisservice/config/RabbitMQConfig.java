@@ -15,8 +15,6 @@ public class RabbitMQConfig {
 
     public static final String EXCHANGE = "analysis.exchange";
 
-    public static final String TILESERVER_SETUP_WSI_ROUTING_KEY = "job.tileserver.setup.wsi";
-
     @Bean
     public TopicExchange analysisExchange() {
         return new TopicExchange(EXCHANGE);
