@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.IOException;
@@ -39,11 +40,14 @@ class ImageServiceTest {
     @Mock
     private ImageMapper imageMapper;
 
+    @Mock
+    private RabbitTemplate rabbitTemplate;
+
     private ImageService imageService;
 
     @BeforeEach
     void setUp() {
-        imageService = new ImageService(imageRepository, objectStorageService, imageMapper, new ObjectMapper());
+        imageService = new ImageService(imageRepository, objectStorageService, imageMapper, new ObjectMapper(), rabbitTemplate);
     }
 
     @Test
@@ -95,7 +99,7 @@ class ImageServiceTest {
         when(imageRepository.searchByText(null)).thenReturn(List.of(withTag, withoutTag));
         when(imageMapper.toDtoList(anyList())).thenAnswer(inv -> {
             List<Image> images = inv.getArgument(0);
-            return images.stream().map(i -> new ImageDto(i.getId(), null, null, null, null, List.of(), List.of(), null)).toList();
+            return images.stream().map(i -> new ImageDto(i.getId(), null, null, null, null, List.of(), List.of(), null, null, null)).toList();
         });
 
         // No tag filter — both returned
@@ -118,7 +122,7 @@ class ImageServiceTest {
         when(imageRepository.searchByText(null)).thenReturn(List.of(matchingImage, partialMatchImage));
         when(imageMapper.toDtoList(List.of(matchingImage))).thenAnswer(inv -> {
             List<Image> images = inv.getArgument(0);
-            return images.stream().map(i -> new ImageDto(i.getId(), null, null, null, null, List.of(), List.of(), null)).toList();
+            return images.stream().map(i -> new ImageDto(i.getId(), null, null, null, null, List.of(), List.of(), null, null, null)).toList();
         });
 
         List<ImageDto> result = imageService.searchImages(null, List.of("history", "art"));
