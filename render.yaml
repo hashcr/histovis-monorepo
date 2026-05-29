@@ -1,0 +1,146 @@
+databases:
+  - name: histovisdb
+    databaseName: histovisdb
+    plan: free
+    region: oregon
+
+services:
+  - type: web
+    name: user-service
+    env: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./apps/user-service/Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: POSTGRES_HOSTNAME
+        fromDatabase:
+          name: histovisdb
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: histovisdb
+          property: port
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: histovisdb
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: histovisdb
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: histovisdb
+          property: password
+      - key: USER_SERVICE_PORT
+        value: 10000
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRATION
+        value: "86400000"
+
+  - type: web
+    name: images-service
+    env: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./apps/images-service/Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: POSTGRES_HOSTNAME
+        fromDatabase:
+          name: histovisdb
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: histovisdb
+          property: port
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: histovisdb
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: histovisdb
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: histovisdb
+          property: password
+      - key: IMAGES_SERVICE_PORT
+        value: 10000
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRATION
+        value: "86400000"
+      - key: STORAGE_TYPE
+        value: minio
+      - key: MINIO_ENDPOINT
+        sync: false
+      - key: MINIO_PUBLIC_ENDPOINT
+        sync: false
+      - key: MINIO_ACCESS_KEY
+        sync: false
+      - key: MINIO_SECRET_KEY
+        sync: false
+      - key: MINIO_BUCKET
+        value: histovis-images
+      - key: RABBITMQ_HOST
+        sync: false
+      - key: RABBITMQ_PORT
+        value: "5672"
+      - key: RABBITMQ_USER
+        sync: false
+      - key: RABBITMQ_PASSWORD
+        sync: false
+      - key: RABBITMQ_VHOST
+        sync: false
+
+  - type: web
+    name: analysis-service
+    env: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./apps/analysis-service/Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: POSTGRES_HOSTNAME
+        fromDatabase:
+          name: histovisdb
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: histovisdb
+          property: port
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: histovisdb
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: histovisdb
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: histovisdb
+          property: password
+      - key: ANALYSIS_SERVICE_PORT
+        value: 10000
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRATION
+        value: "86400000"
+      - key: RABBITMQ_HOST
+        sync: false
+      - key: RABBITMQ_PORT
+        value: "5672"
+      - key: RABBITMQ_USER
+        sync: false
+      - key: RABBITMQ_PASSWORD
+        sync: false
+      - key: RABBITMQ_VHOST
+        sync: false

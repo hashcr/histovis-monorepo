@@ -19,4 +19,6 @@ public class ImageDto {
     private List<String> tagsList;
     private List<CommentDto> comments;
     private String notes;
+    private String viewableImageUrl;
+    private String previewImageUrl;
 }

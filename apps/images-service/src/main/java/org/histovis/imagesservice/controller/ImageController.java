@@ -1,8 +1,10 @@
 package org.histovis.imagesservice.controller;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.extern.slf4j.Slf4j;
 import org.histovis.imagesservice.dto.ImageDto;
+import org.histovis.imagesservice.dto.PatchImageUrlsRequest;
 import org.histovis.imagesservice.dto.UploadImageResponse;
 import org.histovis.imagesservice.dto.response.ImageListResponse;
 import org.histovis.imagesservice.dto.response.ImageResponse;
@@ -64,6 +66,14 @@ public class ImageController {
         String username = authentication.getName();
         log.info("Upload request from user={}, fileName={}", username, fileName);
         return imageService.uploadImage(fileName, title, description, tagsList, imageFile, username);
+    }
+
+    @PatchMapping("/{id}/urls")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void patchImageUrls(@PathVariable UUID id,
+                               @RequestBody @Valid PatchImageUrlsRequest request) {
+        log.info("Patch URLs request for imageId={}", id);
+        imageService.patchImageUrls(id, request.viewableImageUrl(), request.previewImageUrl());
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

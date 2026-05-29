@@ -13,7 +13,10 @@ import org.histovis.imagesservice.model.Image;
 import org.histovis.imagesservice.model.ImageTag;
 import org.histovis.imagesservice.repository.ImageRepository;
 import org.histovis.imagesservice.storage.ObjectStorageService;
+import org.histovis.imagesservice.config.RabbitMQConfig;
+import org.histovis.imagesservice.dto.PyramidalImageSetupMessage;
 import org.histovis.imagesservice.utils.Constants;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -32,15 +35,18 @@ public class ImageService {
     private final ObjectStorageService storageService;
     private final ImageMapper imageMapper;
     private final ObjectMapper objectMapper;
+    private final RabbitTemplate rabbitTemplate;
 
     public ImageService(ImageRepository imageRepository,
                         ObjectStorageService storageService,
                         ImageMapper imageMapper,
-                        ObjectMapper objectMapper) {
+                        ObjectMapper objectMapper,
+                        RabbitTemplate rabbitTemplate) {
         this.imageRepository = imageRepository;
         this.storageService = storageService;
         this.imageMapper = imageMapper;
         this.objectMapper = objectMapper;
+        this.rabbitTemplate = rabbitTemplate;
     }
 
     @Transactional(readOnly = true)
@@ -94,10 +100,14 @@ public class ImageService {
             throw new RuntimeException("Failed to read uploaded file", e);
         }
 
+        boolean isSvs = fileName.toLowerCase().endsWith(".svs");
+
         Image image = new Image();
         image.setFileName(fileName);
         image.setStorageKey(storageKey);
         image.setPublicUrl(publicUrl);
+        image.setViewableImageUrl(isSvs ? null : publicUrl);
+        image.setPreviewImageUrl(isSvs ? null : publicUrl);
         image.setTitle(title);
         image.setDescription(description);
         image.setCreatedBy(uploadedBy);
@@ -105,7 +115,13 @@ public class ImageService {
         setTags(image, tagsList);
 
         Image saved = imageRepository.save(image);
-        log.info("Image uploaded successfully: id={}, storageKey={}", saved.getId(), storageKey);
+        log.info("Image uploaded successfully: id={}, storageKey={}, isSvs={}", saved.getId(), storageKey, isSvs);
+
+        if (isSvs) {
+            PyramidalImageSetupMessage msg = new PyramidalImageSetupMessage(saved.getId(), publicUrl);
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, RabbitMQConfig.TILESERVER_SETUP_WSI_ROUTING_KEY, msg);
+            log.info("PyramidalImageSetup dispatched for SVS: imageId={}", saved.getId());
+        }
 
         return new UploadImageResponse(saved.getId(), saved.getPublicUrl());
     }
@@ -166,6 +182,15 @@ public class ImageService {
         Image saved = imageRepository.save(image);
         log.info("Image updated successfully: id={}", id);
         return imageMapper.toDto(saved);
+    }
+
+    public void patchImageUrls(UUID id, String viewableImageUrl, String previewImageUrl) {
+        Image image = imageRepository.findById(id)
+                .orElseThrow(() -> new ImageNotFoundException(id.toString()));
+        image.setViewableImageUrl(viewableImageUrl);
+        image.setPreviewImageUrl(previewImageUrl);
+        imageRepository.save(image);
+        log.info("Image URLs patched: id={}", id);
     }
 
     private void setTags(Image image, List<String> tagsList) {

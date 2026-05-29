@@ -29,7 +29,9 @@ public class ImageMapper {
                 image.getDescription(),
                 tagsList,
                 comments,
-                image.getNotes()
+                image.getNotes(),
+                image.getViewableImageUrl(),
+                image.getPreviewImageUrl()
         );
     }
 

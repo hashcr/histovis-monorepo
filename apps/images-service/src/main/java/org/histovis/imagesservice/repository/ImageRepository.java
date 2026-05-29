@@ -11,6 +11,7 @@ import java.util.UUID;
 public interface ImageRepository extends JpaRepository<Image, UUID> {
 
     @Query("SELECT i FROM Image i WHERE " +
+           "i.viewableImageUrl IS NOT NULL AND " +
            "(:query IS NULL OR :query = '' OR " +
            "LOWER(i.fileName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
            "LOWER(i.title) LIKE LOWER(CONCAT('%', :query, '%')) OR " +

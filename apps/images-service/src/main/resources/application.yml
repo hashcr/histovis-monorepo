@@ -10,6 +10,12 @@ spring:
         username: ${POSTGRES_USER}
         password: ${POSTGRES_PASSWORD}
         driver-class-name: org.postgresql.Driver
+    rabbitmq:
+        host: ${RABBITMQ_HOST:rabbitmq}
+        port: ${RABBITMQ_PORT:5672}
+        username: ${RABBITMQ_USER:histovis}
+        password: ${RABBITMQ_PASSWORD:histovis123}
+        virtual-host: ${RABBITMQ_VHOST:/}
     jpa:
         hibernate:
             ddl-auto: update
@@ -17,6 +23,7 @@ spring:
         properties:
             hibernate:
                 dialect: org.hibernate.dialect.PostgreSQLDialect
+                default_schema: images_service
 
 # JWT secret (shared with users-service via common library)
 jwt:
