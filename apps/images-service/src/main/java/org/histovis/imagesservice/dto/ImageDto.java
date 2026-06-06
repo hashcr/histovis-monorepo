@@ -21,4 +21,6 @@ public class ImageDto {
     private String notes;
     private String viewableImageUrl;
     private String previewImageUrl;
+    private Double resolutionMpp;
+    private Integer magnification;
 }

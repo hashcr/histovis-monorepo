@@ -31,7 +31,9 @@ public class ImageMapper {
                 comments,
                 image.getNotes(),
                 image.getViewableImageUrl(),
-                image.getPreviewImageUrl()
+                image.getPreviewImageUrl(),
+                image.getResolutionMpp(),
+                image.getMagnification()
         );
     }
 
