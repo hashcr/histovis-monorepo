@@ -66,7 +66,7 @@ class ImageServiceTest {
         when(imageRepository.save(any(Image.class))).thenReturn(saved);
 
         UploadImageResponse response = imageService.uploadImage(
-                "test.tiff", "Test Title", "desc", null, file, "user1");
+                "test.tiff", "Test Title", "desc", null, null, null, file, "user1");
 
         assertThat(response.getId()).isEqualTo(saved.getId());
         assertThat(response.getUrl()).isEqualTo(saved.getPublicUrl());
@@ -137,7 +137,7 @@ class ImageServiceTest {
                 "imageFile", "test.tiff", "image/tiff", "fake".getBytes());
 
         assertThatThrownBy(() -> imageService.uploadImage(
-                "test.tiff", "Title", null, "not-valid-json", file, "user1"))
+                "test.tiff", "Title", null, "not-valid-json", null, null, file, "user1"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Invalid tagsList format");
     }
