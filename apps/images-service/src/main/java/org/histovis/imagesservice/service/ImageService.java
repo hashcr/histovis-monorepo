@@ -79,6 +79,8 @@ public class ImageService {
                                            String title,
                                            String description,
                                            String tagsListJson,
+                                           Integer magnification,
+                                           Double resolutionMpp,
                                            MultipartFile imageFile,
                                            String uploadedBy) {
         List<String> tagsList = parseTagsList(tagsListJson);
@@ -110,6 +112,8 @@ public class ImageService {
         image.setPreviewImageUrl(isSvs ? null : publicUrl);
         image.setTitle(title);
         image.setDescription(description);
+        image.setMagnification(magnification);
+        image.setResolutionMpp(resolutionMpp);
         image.setCreatedBy(uploadedBy);
 
         setTags(image, tagsList);

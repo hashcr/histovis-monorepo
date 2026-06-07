@@ -66,7 +66,7 @@ class ImageServiceTest {
         when(imageRepository.save(any(Image.class))).thenReturn(saved);
 
         UploadImageResponse response = imageService.uploadImage(
-                "test.tiff", "Test Title", "desc", null, file, "user1");
+                "test.tiff", "Test Title", "desc", null, null, null, file, "user1");
 
         assertThat(response.getId()).isEqualTo(saved.getId());
         assertThat(response.getUrl()).isEqualTo(saved.getPublicUrl());
@@ -99,7 +99,7 @@ class ImageServiceTest {
         when(imageRepository.searchByText(null)).thenReturn(List.of(withTag, withoutTag));
         when(imageMapper.toDtoList(anyList())).thenAnswer(inv -> {
             List<Image> images = inv.getArgument(0);
-            return images.stream().map(i -> new ImageDto(i.getId(), null, null, null, null, List.of(), List.of(), null, null, null)).toList();
+            return images.stream().map(i -> new ImageDto(i.getId(), null, null, null, null, List.of(), List.of(), null, null, null, null, null)).toList();
         });
 
         // No tag filter — both returned
@@ -122,7 +122,7 @@ class ImageServiceTest {
         when(imageRepository.searchByText(null)).thenReturn(List.of(matchingImage, partialMatchImage));
         when(imageMapper.toDtoList(List.of(matchingImage))).thenAnswer(inv -> {
             List<Image> images = inv.getArgument(0);
-            return images.stream().map(i -> new ImageDto(i.getId(), null, null, null, null, List.of(), List.of(), null, null, null)).toList();
+            return images.stream().map(i -> new ImageDto(i.getId(), null, null, null, null, List.of(), List.of(), null, null, null, null, null)).toList();
         });
 
         List<ImageDto> result = imageService.searchImages(null, List.of("history", "art"));
@@ -137,7 +137,7 @@ class ImageServiceTest {
                 "imageFile", "test.tiff", "image/tiff", "fake".getBytes());
 
         assertThatThrownBy(() -> imageService.uploadImage(
-                "test.tiff", "Title", null, "not-valid-json", file, "user1"))
+                "test.tiff", "Title", null, "not-valid-json", null, null, file, "user1"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("Invalid tagsList format");
     }

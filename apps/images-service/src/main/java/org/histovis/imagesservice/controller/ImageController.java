@@ -60,12 +60,14 @@ public class ImageController {
             @RequestParam @NotBlank String title,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) String tagsList,
+            @RequestParam(required = false) Integer magnification,
+            @RequestParam(required = false) Double resolutionMpp,
             @RequestParam MultipartFile imageFile,
             Authentication authentication) {
 
         String username = authentication.getName();
         log.info("Upload request from user={}, fileName={}", username, fileName);
-        return imageService.uploadImage(fileName, title, description, tagsList, imageFile, username);
+        return imageService.uploadImage(fileName, title, description, tagsList, magnification, resolutionMpp, imageFile, username);
     }
 
     @PatchMapping("/{id}/urls")

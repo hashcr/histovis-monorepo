@@ -38,6 +38,12 @@ public class Image {
     @Column(name = "preview_image_url")
     private String previewImageUrl;
 
+    @Column(name = "resolution_mpp")
+    private Double resolutionMpp;
+
+    @Column(name = "magnification")
+    private Integer magnification;
+
     @Column(name = "title", nullable = false)
     private String title;
 
