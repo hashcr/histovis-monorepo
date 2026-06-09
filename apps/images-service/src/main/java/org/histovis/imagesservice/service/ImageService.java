@@ -12,7 +12,7 @@ import org.histovis.imagesservice.model.Comment;
 import org.histovis.imagesservice.model.Image;
 import org.histovis.imagesservice.model.ImageTag;
 import org.histovis.imagesservice.repository.ImageRepository;
-import org.histovis.imagesservice.storage.ObjectStorageService;
+import org.histovis.commons.storage.ObjectStorageService;
 import org.histovis.imagesservice.config.RabbitMQConfig;
 import org.histovis.imagesservice.dto.PyramidalImageSetupMessage;
 import org.histovis.imagesservice.utils.Constants;

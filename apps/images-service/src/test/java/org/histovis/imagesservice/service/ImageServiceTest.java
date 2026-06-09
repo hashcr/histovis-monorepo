@@ -8,7 +8,7 @@ import org.histovis.imagesservice.mapper.ImageMapper;
 import org.histovis.imagesservice.model.ImageTag;
 import org.histovis.imagesservice.model.Image;
 import org.histovis.imagesservice.repository.ImageRepository;
-import org.histovis.imagesservice.storage.ObjectStorageService;
+import org.histovis.commons.storage.ObjectStorageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
