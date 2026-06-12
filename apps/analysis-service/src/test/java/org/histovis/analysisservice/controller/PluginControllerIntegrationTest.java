@@ -1,5 +1,6 @@
 package org.histovis.analysisservice.controller;
 
+import org.histovis.analysisservice.common.PluginStatus;
 import org.histovis.analysisservice.model.Plugin;
 import org.histovis.analysisservice.repository.PluginRepository;
 import org.histovis.commons.jwt.JwtUtil;
@@ -75,6 +76,7 @@ class PluginControllerIntegrationTest {
         plugin.setTopic("test-topic");
         plugin.setInstalledBy("admin@example.com");
         plugin.setInstalledDate(LocalDateTime.now());
+        plugin.setStatus(PluginStatus.INSTALLED);
         return pluginRepository.save(plugin);
     }
 

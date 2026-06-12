@@ -164,6 +164,12 @@ services:
       RABBITMQ_PORT: ${RABBITMQ_PORT}
       RABBITMQ_USER: ${RABBITMQ_USER}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      STORAGE_TYPE: ${STORAGE_TYPE}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+      MINIO_BUCKET: ${MINIO_BUCKET}
     ports:
       - "${ANALYSIS_SERVICE_PORT:-8082}:8082"
     depends_on:
@@ -171,6 +177,10 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
     restart: unless-stopped
     networks:
       - histovis-network

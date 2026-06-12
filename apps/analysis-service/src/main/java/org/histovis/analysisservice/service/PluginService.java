@@ -1,15 +1,20 @@
 package org.histovis.analysisservice.service;
 
-
 import lombok.extern.slf4j.Slf4j;
+import org.histovis.analysisservice.common.PluginStatus;
+import org.histovis.analysisservice.dto.InstallPluginRequest;
 import org.histovis.analysisservice.dto.PluginDto;
 import org.histovis.analysisservice.exception.PluginNotFoundException;
 import org.histovis.analysisservice.mapper.PluginMapper;
 import org.histovis.analysisservice.model.Plugin;
 import org.histovis.analysisservice.repository.PluginRepository;
+import org.histovis.commons.storage.ObjectStorageService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
@@ -19,10 +24,12 @@ public class PluginService {
 
     private final PluginRepository pluginRepository;
     private final PluginMapper pluginMapper;
+    private final ObjectStorageService storageService;
 
-    public PluginService(PluginRepository pluginRepository, PluginMapper pluginMapper) {
+    public PluginService(PluginRepository pluginRepository, PluginMapper pluginMapper, ObjectStorageService storageService) {
         this.pluginRepository = pluginRepository;
         this.pluginMapper = pluginMapper;
+        this.storageService = storageService;
     }
 
     @Transactional(readOnly = true)
@@ -34,5 +41,40 @@ public class PluginService {
     public Plugin findByCode(String code) {
         return pluginRepository.findByCode(code)
                 .orElseThrow(() -> new PluginNotFoundException(code));
+    }
+
+    public PluginDto installPlugin(InstallPluginRequest request, MultipartFile scriptFile, String installedBy) {
+        return pluginRepository.findByCode(request.code())
+                .map(existing -> {
+                    log.info("Plugin '{}' already exists, returning existing.", request.code());
+                    return pluginMapper.toDto(existing);
+                })
+                .orElseGet(() -> {
+                    String scriptUrl = uploadScript(request.code(), scriptFile);
+                    Plugin plugin = new Plugin();
+                    plugin.setCode(request.code());
+                    plugin.setName(request.name());
+                    plugin.setDescription(request.description());
+                    plugin.setQueue(request.queue());
+                    plugin.setTopic(request.topic());
+                    plugin.setExampleArgs(request.exampleArgs());
+                    plugin.setReadme(request.readme());
+                    plugin.setScriptUrl(scriptUrl);
+                    plugin.setInstalledBy(installedBy);
+                    plugin.setInstalledDate(LocalDateTime.now());
+                    plugin.setStatus(PluginStatus.PENDING);
+                    Plugin saved = pluginRepository.save(plugin);
+                    log.info("Plugin '{}' installed.", saved.getCode());
+                    return pluginMapper.toDto(saved);
+                });
+    }
+
+    private String uploadScript(String code, MultipartFile scriptFile) {
+        String key = "plugins/" + code + "/" + code + ".py";
+        try {
+            return storageService.upload(key, scriptFile.getInputStream(), scriptFile.getSize(), "text/x-python");
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Failed to read script file for plugin: " + code, e);
+        }
     }
 }

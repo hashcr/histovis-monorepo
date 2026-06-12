@@ -1,6 +1,7 @@
 package org.histovis.analysisservice.config;
 
 import lombok.extern.slf4j.Slf4j;
+import org.histovis.analysisservice.common.PluginStatus;
 import org.histovis.analysisservice.model.Plugin;
 import org.histovis.analysisservice.repository.PluginRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -31,6 +32,7 @@ public class DataInitializer implements CommandLineRunner {
             plugin.setExampleArgs(Map.of());
             plugin.setInstalledBy("system");
             plugin.setInstalledDate(LocalDateTime.now());
+            plugin.setStatus(PluginStatus.INSTALLED);
             plugin.setReadme("""
                     # Describe WSI Plugin
 
@@ -68,6 +70,7 @@ public class DataInitializer implements CommandLineRunner {
             plugin.setExampleArgs(Map.of("prob_thresh", "0.5", "nms_thresh", "0.4"));
             plugin.setInstalledBy("system");
             plugin.setInstalledDate(LocalDateTime.now());
+            plugin.setStatus(PluginStatus.INSTALLED);
             plugin.setReadme("""
                     # HE Nuclei Count Plugin
 
