@@ -36,6 +36,7 @@ public class SecurityConfig {
                     .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                     .requestMatchers("/actuator/info", "/actuator/info/**").permitAll()
                     .requestMatchers("/api/analysis/jobs/*/result").permitAll()
+                    .requestMatchers("/api/analysis/plugins/*/status").permitAll()
                     .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex

@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.histovis.analysisservice.dto.InstallPluginRequest;
 import org.histovis.analysisservice.dto.PluginDto;
+import org.histovis.analysisservice.dto.UpdatePluginStatusRequest;
 import org.histovis.analysisservice.dto.response.ListPluginsResponse;
 import org.histovis.analysisservice.service.PluginService;
 import org.histovis.analysisservice.utils.Constants;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -50,6 +53,13 @@ public class PluginController {
         log.info("Install plugin request: code={}, user={}", code, authentication.getName());
         InstallPluginRequest request = new InstallPluginRequest(code, name, description, queue, topic, parseExampleArgs(exampleArgs), readme);
         return pluginService.installPlugin(request, scriptFile, authentication.getName());
+    }
+
+    @PutMapping("/{id}/status")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void updateStatus(@PathVariable UUID id,
+                             @RequestBody @Valid UpdatePluginStatusRequest request) {
+        pluginService.updateStatus(id, request.status());
     }
 
     private Map<String, String> parseExampleArgs(String json) {
