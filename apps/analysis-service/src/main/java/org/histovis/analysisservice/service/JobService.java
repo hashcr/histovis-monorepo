@@ -59,7 +59,7 @@ public class JobService {
         log.info("Job submitted id={} plugin={} by user={}", saved.getId(), saved.getPluginCode(), username);
 
         Plugin plugin = pluginService.findByCode(request.pluginCode());
-        JobMessage message = new JobMessage(saved.getId(), saved.getImageUrl(), saved.getArgs());
+        JobMessage message = new JobMessage(saved.getId(), saved.getImageId(), saved.getImageUrl(), saved.getArgs());
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE, plugin.getTopic(), message);
         log.info("Job dispatched to exchange={} topic={} jobId={}", RabbitMQConfig.EXCHANGE, plugin.getTopic(), saved.getId());
 
