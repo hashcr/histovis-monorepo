@@ -14,6 +14,7 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMQConfig {
 
     public static final String EXCHANGE = "analysis.exchange";
+    public static final String VERIFY_PLUGIN_ROUTING_KEY = "job.qwen.verify_plugin";
 
     @Bean
     public TopicExchange analysisExchange() {

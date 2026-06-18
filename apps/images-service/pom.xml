@@ -60,13 +60,6 @@
 			<artifactId>spring-boot-starter-amqp</artifactId>
 		</dependency>
 
-		<!-- MinIO object storage -->
-		<dependency>
-			<groupId>io.minio</groupId>
-			<artifactId>minio</artifactId>
-			<version>8.5.7</version>
-		</dependency>
-
 		<!-- JJWT (for JWT filter) -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>

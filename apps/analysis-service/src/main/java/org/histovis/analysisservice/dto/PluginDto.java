@@ -1,5 +1,7 @@
 package org.histovis.analysisservice.dto;
 
+import org.histovis.analysisservice.common.PluginStatus;
+
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
@@ -14,5 +16,7 @@ public record PluginDto(
     Map<String, String> exampleArgs,
     String installedBy,
     LocalDateTime installedDate,
-    String readme
+    String readme,
+    String scriptUrl,
+    PluginStatus status
 ) {}

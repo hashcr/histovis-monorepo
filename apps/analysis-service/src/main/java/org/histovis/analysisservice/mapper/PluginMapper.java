@@ -20,7 +20,9 @@ public class PluginMapper {
                 plugin.getExampleArgs(),
                 plugin.getInstalledBy(),
                 plugin.getInstalledDate(),
-                plugin.getReadme()
+                plugin.getReadme(),
+                plugin.getScriptUrl(),
+                plugin.getStatus()
         );
     }
 

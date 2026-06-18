@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.histovis.commons.jwt.JwtUtil;
 import org.histovis.imagesservice.model.Image;
 import org.histovis.imagesservice.repository.ImageRepository;
-import org.histovis.imagesservice.storage.ObjectStorageService;
+import org.histovis.commons.storage.ObjectStorageService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

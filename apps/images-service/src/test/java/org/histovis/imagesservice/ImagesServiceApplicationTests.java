@@ -1,7 +1,7 @@
 package org.histovis.imagesservice;
 
 import org.histovis.imagesservice.config.TestContainersConfig;
-import org.histovis.imagesservice.storage.ObjectStorageService;
+import org.histovis.commons.storage.ObjectStorageService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
