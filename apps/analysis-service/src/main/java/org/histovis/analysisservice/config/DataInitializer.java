@@ -96,5 +96,51 @@ public class DataInitializer implements CommandLineRunner {
             pluginRepository.save(plugin);
             log.info("Default plugin 'he_nuclei_count' created.");
         }
+
+        if (pluginRepository.findByCode("ihc_positive_cells").isEmpty()) {
+            Plugin plugin = new Plugin();
+            plugin.setCode("ihc_positive_cells");
+            plugin.setName("IHC Positive Cell Quantification");
+            plugin.setDescription("Quantifies DAB-positive cells in IHC-stained histopathology images, classifying each nucleus as negative, weak (1+), moderate (2+), or strong (3+) based on DAB optical density thresholds.");
+            plugin.setQueue("analysis.exchange");
+            plugin.setTopic("job.stardist.ihc_positive_cells");
+            plugin.setExampleArgs(Map.of(
+                    "dab_threshold", "0.05",
+                    "thresh_weak", "0.05",
+                    "thresh_moderate", "0.15",
+                    "thresh_strong", "0.3"
+            ));
+            plugin.setInstalledBy("system");
+            plugin.setInstalledDate(LocalDateTime.now());
+            plugin.setStatus(PluginStatus.INSTALLED);
+            plugin.setReadme("""
+                    # IHC Positive Cell Quantification Plugin
+
+                    ## Overview
+                    This plugin quantifies DAB-positive cells in IHC-stained histopathology images within a specified region of interest.
+
+                    ## What it does
+                    - Detects nuclei within the specified region
+                    - Measures DAB optical density (OD) mean for each nucleus
+                    - Classifies each nucleus as negative, weak (1+), moderate (2+), or strong (3+)
+                    - Returns counts and percentages per category
+
+                    ## Arguments
+                    - `region` — region of interest as JSON `{"x":int,"y":int,"width":int,"height":int}` (required)
+                    - `dab_threshold` — minimum DAB OD mean to classify a nucleus as positive (default: 0.05)
+                    - `thresh_weak` — DAB mean ≥ this value → weak 1+ (default: 0.05)
+                    - `thresh_moderate` — DAB mean ≥ this value → moderate 2+ (default: 0.15)
+                    - `thresh_strong` — DAB mean ≥ this value → strong 3+ (default: 0.3)
+
+                    ## Output
+                    Positive cell counts and percentages broken down by staining intensity (negative, 1+, 2+, 3+).
+
+                    ## Notes
+                    - Designed for DAB/hematoxylin IHC staining
+                    - Results are non-diagnostic and intended for research use only
+                    """);
+            pluginRepository.save(plugin);
+            log.info("Default plugin 'ihc_positive_cells' created.");
+        }
     }
 }
