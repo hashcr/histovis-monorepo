@@ -38,7 +38,7 @@
             "url": "{{user_service_url}}/api/auth/login",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"ashuin.sharma@gmail.com\",\n  \"password\": \"123queso\"\n}"
+              "raw": "{\n  \"username\": \"{{seed_email}}\",\n  \"password\": \"{{seed_password}}\"\n}"
             }
           }
         },
