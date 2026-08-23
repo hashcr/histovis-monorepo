@@ -40,7 +40,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:${USER_SERVICE_PORT:-8080}/actuator/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 8
@@ -55,6 +55,7 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -74,6 +75,7 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+      MINIO_PORT: ${MINIO_PORT:-9000}
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -95,7 +97,7 @@ services:
         condition: service_healthy
     entrypoint: >
       /bin/sh -c "
-        mc alias set local http://minio:9000 $${MINIO_ACCESS_KEY} $${MINIO_SECRET_KEY} &&
+        mc alias set local http://minio:${MINIO_PORT:-9000} $${MINIO_ACCESS_KEY} $${MINIO_SECRET_KEY} &&
         mc mb --ignore-existing local/$${MINIO_BUCKET} &&
         mc anonymous set download local/$${MINIO_BUCKET}
       "
@@ -103,6 +105,7 @@ services:
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
       MINIO_BUCKET: ${MINIO_BUCKET}
+      MINIO_PORT: ${MINIO_PORT:-9000}
     restart: on-failure
     networks:
       - histovis-network
@@ -137,7 +140,7 @@ services:
       minio-init:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD-SHELL", "wget -q --spider http://localhost:8081/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:${IMAGES_SERVICE_PORT:-8081}/actuator/health || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 8
@@ -181,6 +184,12 @@ services:
         condition: service_healthy
       minio-init:
         condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:${ANALYSIS_SERVICE_PORT:-8082}/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
     restart: unless-stopped
     networks:
       - histovis-network
