@@ -1,0 +1,288 @@
+# docker-compose.yaml — self-sufficient deployment file for histovis-monorepo
+#
+# Goal: deploy this with Coolify (or plain `docker compose up`) on a brand-new VM
+# and have it work with ZERO .env file, using only the defaults baked in below.
+# Every default here reflects a real bug found and fixed in production during the
+# original Hetzner rollout — see the inline comments and DEPLOY.md for why each
+# one is set the way it is.
+#
+# The only thing you should actually need to change for a new deployment is the
+# PUBLIC_DOMAIN variable (see the copy-paste env block at the bottom of this file,
+# or DEPLOY.md). Everything domain-derived below reads from that single variable.
+#
+# histovis-workers (the separate AI/analysis worker repo) depends on this stack's
+# postgres/rabbitmq/minio being reachable over the shared `histovis-network` — see
+# DEPLOY.md for the full two-repo deployment order and the manual steps Coolify
+# does not automate (HTTPS domain routing, RabbitMQ password sync).
+
+services:
+  postgres:
+    # IMPORTANT: postgres:18+ changed its data directory layout (pg_ctlcluster-style)
+    # and refuses to start against a plain volume mounted at /var/lib/postgresql/data
+    # the old way. Stick to 17 unless you also update the volume layout to match.
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-histovisdb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres47205!@%}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Creates the user_service/images_service/analysis_service schemas the Spring
+      # apps expect on first boot. Without this, a brand-new database only has the
+      # default `public` schema and every service fails on its first DDL statement.
+      - ./scripts/postgres-init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - histovis-network
+
+  user-service:
+    build:
+      context: .
+      dockerfile: apps/user-service/Dockerfile
+    environment:
+      POSTGRES_HOSTNAME: ${POSTGRES_HOSTNAME:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-histovisdb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres47205!@%}
+      # Default is 8085, not the app's own historical default of 8080 — 8080 collides
+      # with Coolify's own dashboard port on the host. Container-side port below is
+      # kept identical to this on purpose: the app binds internally to whatever port
+      # this variable says, so host:container must always match or the healthcheck
+      # (and anyone hitting the container directly) breaks.
+      USER_SERVICE_PORT: ${USER_SERVICE_PORT:-8085}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      # No safe default for a signing secret — see the required env block below.
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set — see the required env block in this file's header comment or DEPLOY.md}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+    ports:
+      - "${USER_SERVICE_PORT:-8085}:${USER_SERVICE_PORT:-8085}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:$$USER_SERVICE_PORT/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - histovis-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    restart: unless-stopped
+    environment:
+      # NOTE: RABBITMQ_DEFAULT_USER/PASS only take effect on a brand-new, empty
+      # rabbitmq volume — the docker image applies them once at first boot only.
+      # If you ever change RABBITMQ_PASSWORD after the volume already exists, you
+      # must also run `rabbitmqctl change_password` inside the container yourself;
+      # editing this file/the .env alone will not update an existing user's password.
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-histovis}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-histovis47205!@%}
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - histovis-network
+
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin47205!@%}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - histovis-network
+
+  minio-init:
+    image: minio/minio:latest
+    # Excludes this one-shot init job from Coolify's aggregate health/status
+    # calculation. Without this, Coolify reports the whole resource as "Degraded"
+    # forever after this container legitimately exits 0 (it's supposed to run once
+    # and stop — Coolify's status aggregator otherwise treats any running+exited mix
+    # as degraded, regardless of exit code).
+    exclude_from_hc: true
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set local http://minio:9000 $${MINIO_ACCESS_KEY} $${MINIO_SECRET_KEY} &&
+        mc mb --ignore-existing local/$${MINIO_BUCKET} &&
+        mc anonymous set download local/$${MINIO_BUCKET}
+      "
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin47205!@%}
+      MINIO_BUCKET: ${MINIO_BUCKET:-histovis-images}
+    restart: on-failure
+    networks:
+      - histovis-network
+
+  images-service:
+    build:
+      context: .
+      dockerfile: apps/images-service/Dockerfile
+    environment:
+      POSTGRES_HOSTNAME: ${POSTGRES_HOSTNAME:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-histovisdb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres47205!@%}
+      IMAGES_SERVICE_PORT: ${IMAGES_SERVICE_PORT:-8086}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set — see the required env block in this file's header comment or DEPLOY.md}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      STORAGE_TYPE: ${STORAGE_TYPE:-minio}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      # This is the URL browsers/the SPA actually load images from, so it must be a
+      # real, publicly-reachable HTTPS address once you're past local dev — see
+      # DEPLOY.md for the one-time manual step to expose MinIO through Coolify's
+      # proxy at this address. PUBLIC_DOMAIN is the one thing you should need to
+      # change for a new deployment; everything below derives from it.
+      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-https://storage.${PUBLIC_DOMAIN:-histovis.online}/${MINIO_BUCKET:-histovis-images}}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin47205!@%}
+      MINIO_BUCKET: ${MINIO_BUCKET:-histovis-images}
+    ports:
+      - "${IMAGES_SERVICE_PORT:-8086}:${IMAGES_SERVICE_PORT:-8086}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:$$IMAGES_SERVICE_PORT/actuator/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - histovis-network
+
+  analysis-service:
+    build:
+      context: .
+      dockerfile: apps/analysis-service/Dockerfile
+    environment:
+      POSTGRES_HOSTNAME: ${POSTGRES_HOSTNAME:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      POSTGRES_DB: ${POSTGRES_DB:-histovisdb}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres47205!@%}
+      ANALYSIS_SERVICE_PORT: ${ANALYSIS_SERVICE_PORT:-8087}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set — see the required env block in this file's header comment or DEPLOY.md}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+      RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+      RABBITMQ_USER: ${RABBITMQ_USER:-histovis}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-histovis47205!@%}
+      STORAGE_TYPE: ${STORAGE_TYPE:-minio}
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-http://minio:9000}
+      MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-https://storage.${PUBLIC_DOMAIN:-histovis.online}/${MINIO_BUCKET:-histovis-images}}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin47205!@%}
+      MINIO_BUCKET: ${MINIO_BUCKET:-histovis-images}
+    ports:
+      - "${ANALYSIS_SERVICE_PORT:-8087}:${ANALYSIS_SERVICE_PORT:-8087}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    networks:
+      - histovis-network
+
+  seeder:
+    image: python:3.12-slim
+    profiles: ["seed"]
+    volumes:
+      - ./scripts/seed-images:/scripts
+    environment:
+      USER_SERVICE_URL: http://user-service:${USER_SERVICE_PORT:-8085}
+      IMAGES_SERVICE_URL: http://images-service:${IMAGES_SERVICE_PORT:-8086}
+      SEED_EMAIL: ${SEED_EMAIL:-admin@example.com}
+      SEED_PASSWORD: ${SEED_PASSWORD:?SEED_PASSWORD must be set if you use the seed profile}
+    command: >
+      sh -c "pip install -r /scripts/requirements.txt -q && python /scripts/seed.py"
+    depends_on:
+      user-service:
+        condition: service_healthy
+      images-service:
+        condition: service_healthy
+    restart: on-failure
+    networks:
+      - histovis-network
+
+volumes:
+  postgres_data:
+  minio_data:
+  rabbitmq_data:
+
+networks:
+  # Deliberately NOT external:true — the first of the two histovis apps to deploy
+  # on a fresh server creates this network; the second one just attaches to the
+  # already-existing network of the same name. See DEPLOY.md for deploy order.
+  histovis-network:
+    name: histovis-network
+
+# ---------------------------------------------------------------------------
+# Required / recommended environment variables to set in Coolify (or a real
+# .env file) — copy this whole block as a starting point:
+# ---------------------------------------------------------------------------
+#
+# # Change this to the University's actual domain — everything below derives from it
+# PUBLIC_DOMAIN=histovis.online
+#
+# # Required — no working default on purpose, this signs auth tokens
+# JWT_SECRET=<generate a real random secret, e.g. `openssl rand -hex 32`>
+#
+# # Change these from the placeholder defaults for anything beyond local testing
+# POSTGRES_PASSWORD=postgres47205!@%
+# RABBITMQ_USER=histovis
+# RABBITMQ_PASSWORD=histovis47205!@%
+# MINIO_ACCESS_KEY=minioadmin
+# MINIO_SECRET_KEY=minioadmin47205!@%
+#
+# # Only needed if you use the `seed` profile
+# SEED_EMAIL=admin@example.com
+# SEED_PASSWORD=<pick something>
+#
+# Everything else in this file already has a working default and does not need
+# to be set unless you want to override it (custom ports, custom bucket name, etc).
