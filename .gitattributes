@@ -1,0 +1,13 @@
+# Normalize all text files to LF in the repository, regardless of which
+# OS/editor (Windows cmd, WSL, IntelliJ) commits them. Git still checks
+# them out as LF everywhere unless overridden below or in a nested
+# .gitattributes (see apps/user-service, libs/java-commons for mvnw/*.cmd).
+* text=auto eol=lf
+
+*.cmd text eol=crlf
+
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.ico binary
